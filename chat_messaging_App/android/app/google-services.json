@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "649218599394",
+    "project_id": "messagingflashchat",
+    "storage_bucket": "messagingflashchat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:649218599394:android:57ff76a889abb25caab1bb",
+        "android_client_info": {
+          "package_name": "com.example.chat_messaging_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA7nDrzyf5nQcGC2HGr2jbUvA8-m-3Rco"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
