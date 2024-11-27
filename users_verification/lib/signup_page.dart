@@ -24,8 +24,16 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
   Future <void> createUserwithEmailandPassword() async {
-final userCredential =   await FirebaseAuth.instance.createUserWithEmailAndPassword(email: emailController.text.trim(), password: passwordController.text.trim());
-  print(userCredential);
+    try{
+      final userCredential =   await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim());
+      print(userCredential);
+    }
+   on FirebaseAuthException catch(e){
+      print(e.message);
+    }
+
   }
 
   @override
