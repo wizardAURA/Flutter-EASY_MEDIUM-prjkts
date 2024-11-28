@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -30,8 +31,10 @@ class _AddNewTaskState extends State<AddNewTask> {
      final data =await  FirebaseFirestore.instance.collection("tasks").add({
         "title": titleController.text.trim(),
         "description": descriptionController.text.trim(),
-        "date" : FieldValue.serverTimestamp(),
-        "colour": rgbToHex(_selectedColor)
+        "postedAt" : FieldValue.serverTimestamp(),
+       "date" : selectedDate,
+        "colour": rgbToHex(_selectedColor),
+        "creator": FirebaseAuth.instance.currentUser!.uid,
       });
      print(data);
     }
@@ -139,7 +142,9 @@ class _AddNewTaskState extends State<AddNewTask> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () async{
+                  await uploadTaskToDb();
+                },
                 child: const Text(
                   'SUBMIT',
                   style: TextStyle(

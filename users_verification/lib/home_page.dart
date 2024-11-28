@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:users_verification/add_new_task.dart';
 import 'package:users_verification/utils.dart';
 import 'package:users_verification/widgets/date_selector.dart';
@@ -37,50 +39,58 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           children: [
-            const DateSelector(),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return Row(
-                    children: [
-                      const Expanded(
-                        child: TaskCard(
-                          color: Color.fromRGBO(
-                            246,
-                            222,
-                            194,
-                            1,
-                          ),
-                          headerText: 'My humor upsets me XD',
-                          descriptionText: 'My humor not that great:(',
-                          scheduledDate: '69th August, 4020',
-                        ),
-                      ),
-                      Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          color: strengthenColor(
-                            const Color.fromRGBO(246, 222, 194, 1),
-                            0.69,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: Text(
-                          '10:00AM',
-                          style: TextStyle(
-                            fontSize: 17,
-                          ),
-                        ),
-                      )
-                    ],
+             DateSelector(),
+            StreamBuilder(
+              stream: FirebaseFirestore.instance.collection("tasks").snapshots(),
+              builder: (context,snapshot) {
+                if(snapshot.connectionState == ConnectionState.waiting){
+                  return const Center(
+                    child: CircularProgressIndicator()
                   );
-                },
-              ),
+                }
+
+                return Expanded(
+                child: ListView.builder(
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var date = snapshot.data!.docs[index].data()['date'].toDate();
+                    var formattedDate = DateFormat('EEE, dd MMM').format(date);
+                    return Row(
+                      children: [
+                         Expanded(
+                          child: TaskCard(
+                            color: hexToColor(snapshot.data!.docs[index].data()['colour']),
+                            headerText:snapshot.data!.docs[index].data()['title'],
+                            descriptionText: snapshot.data!.docs[index].data()['description'],
+                            scheduledDate: formattedDate,
+                          ),
+                        ),
+                        Container(
+                          height: 20,
+                          width: 20,
+                          decoration: BoxDecoration(
+                            color: strengthenColor(
+                              hexToColor(snapshot.data!.docs[index].data()['colour']),
+                              0.69,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Text(
+                            '10:00AM',
+                            style: TextStyle(
+                              fontSize: 17,
+                            ),
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                ),
+              );
+              },
             ),
           ],
         ),
