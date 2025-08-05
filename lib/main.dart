@@ -1,11 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_project/addnew_Tasks.dart';
-import 'package:firebase_project/firebase_options.dart';
-import 'package:firebase_project/home.dart';
-import 'package:firebase_project/login_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_project/SignUppage.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'UI/screens/SignUppage.dart';
+import 'UI/screens/login_page.dart';
+import 'ui/screens/home.dart';
+import 'ui/screens/task_list_screen.dart';
+import 'ui/screens/add_edit_task_screen.dart';
+import 'bloc/auth/auth_bloc.dart';
+import 'bloc/auth/auth_state.dart';
+import 'bloc/task/task_bloc.dart';
+import 'firebase_options.dart';
+import 'models/tasks.dart';
+import 'repositories/auth_repository.dart';
+import 'repositories/task_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,55 +22,118 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-    title: 'Task managment',
-      theme: ThemeData(
-        fontFamily: 'Oswald',
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
-            minimumSize: const Size(double.infinity, 60),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(create: (_) => AuthBloc(AuthRepository())),
+        BlocProvider<TaskBloc>(
+          create: (_) => TaskBloc(taskRepository: TaskRepository()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'TaskMate',
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6A1B9A)),
+          textTheme: GoogleFonts.oswaldTextTheme(),
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF6A1B9A),
+            foregroundColor: Colors.white,
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 22),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
-        inputDecorationTheme: InputDecorationTheme(
-          contentPadding: const EdgeInsets.all(27),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.grey.shade300,
-              width: 3,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              // color: Pallete.gradient2,
-              width: 3,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+        home: const AuthWrapper(),
+        routes: {
+          '/home': (_) => const HomeScreen(),
+          '/login': (_) => const LoginScreen(),
+          '/signup': (_) => const SignUpScreen(),
+          '/task_list': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            if (args is String && args.isNotEmpty) {
+              return TaskListScreen(userId: args);
+            } else {
+              return Scaffold(
+                body: Center(
+                  child: Text(
+                    'Error: userId missing! Args: $args',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+          },
+          '/add_task': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            if (args is String && args.isNotEmpty) {
+              return AddEditTaskScreen(userId: args);
+            } else {
+              return Scaffold(
+                body: Center(
+                  child: Text(
+                    'Error: userId missing! Args: $args',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+          },
+          '/edit_task': (context) {
+            final task = ModalRoute.of(context)!.settings.arguments;
+            if (task is Task) {
+              return AddEditTaskScreen(existingTask: task);
+            } else {
+              return Scaffold(
+                body: Center(
+                  child: Text(
+                    'Error: task missing or wrong type! Args: $task',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+          },
+        },
+        debugShowCheckedModeBanner: false,
       ),
-        home: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, asyncSnapshot) {
-          if(asyncSnapshot.connectionState == ConnectionState.waiting){
-            return const Center(child: CircularProgressIndicator(),);
-
-          }
-          if(asyncSnapshot.data != null){
-            return homePage();
-          }
-          return Signuppage();
-          }
-        ),
     );
   }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is Authenticated) {
+          return const HomeScreen();
+        } else if (state is Unauthenticated || state is AuthInitial) {
+          return const LoginScreen();
+        } else if (state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is AuthError) {
+          return const LoginScreen();
+        }
+        return const LoginScreen();
+      },
+    );
   }
+}

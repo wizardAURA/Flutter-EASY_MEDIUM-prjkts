@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class kTextformfield extends StatelessWidget {
-  const kTextformfield( this.controller,  this.hinttext, {this.maxLines = 1});
+  const kTextformfield( this.controller,  this.hinttext, {super.key, this.maxLines = 1});
   final TextEditingController controller;
   final String hinttext;
   final int? maxLines;
@@ -17,7 +17,7 @@ class kTextformfield extends StatelessWidget {
   }
 }
 class kbtns extends StatelessWidget {
-  const kbtns( this.child,  this.onpressed, this.txtcolour);
+  const kbtns( this.child,  this.onpressed, this.txtcolour, {super.key});
   final Widget child;
   final VoidCallback onpressed;
   final Color txtcolour;
